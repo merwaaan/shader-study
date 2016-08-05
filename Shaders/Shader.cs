@@ -21,6 +21,7 @@ namespace Shaders
         public int DiffuseMapLocation { get; private set; }
         public int SpecularMapLocation { get; private set; }
         public int NormalMapLocation { get; private set; }
+        public int HeightMapLocation { get; private set; }
 
         public int PositionLocation { get; private set; }
         public int ColorLocation { get; private set; }
@@ -78,6 +79,7 @@ namespace Shaders
             DiffuseMapLocation = GL.GetUniformLocation(Program, "diffuse_map");
             SpecularMapLocation = GL.GetUniformLocation(Program, "specular_map");
             NormalMapLocation = GL.GetUniformLocation(Program, "normal_map");
+            HeightMapLocation = GL.GetUniformLocation(Program, "height_map");
 
             PositionLocation = GL.GetAttribLocation(Program, "vertex_position");
             ColorLocation = GL.GetAttribLocation(Program, "vertex_color");

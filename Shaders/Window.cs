@@ -51,19 +51,20 @@ namespace Shaders
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
             _modelMatrix = Matrix4.Identity;
-            _viewMatrix = Matrix4.LookAt(Vector3.UnitZ * 1, Vector3.Zero, Vector3.UnitY);
+            _viewMatrix = Matrix4.LookAt(Vector3.UnitZ, Vector3.Zero, Vector3.UnitY);
             _projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver2, Width / (float)Height, 0.005f, 100f);
 
             //_shaders.Add("Single color", new Shader(this, "SingleColor"));
             //_shaders.Add("Vertex colors", new Shader(this, "VertexColors"));
             //_shaders.Add("Texture mapping", new Shader(this, "TextureMapping"));
             //_shaders.Add("Phong shading", new Shader(this, "Phong"));
-            _shaders.Add("Normal mapping", new Shader(this, "NormalMapping"));
+            //_shaders.Add("Normal mapping", new Shader(this, "NormalMapping"));
+            _shaders.Add("Parallax mapping", new Shader(this, "ParallaxMapping"));
 
             // Load the mesh data
 
             var importer = new AssimpContext();
-            _model = importer.ImportFile("Models/eyeball.obj", PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.CalculateTangentSpace);
+            _model = importer.ImportFile("Models/wall.obj", PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.CalculateTangentSpace);
 
             _vertices = new float[_model.Meshes.Sum(m => m.Vertices.Count) * (3 + 3 + 3 + 3 + 3 + 2)]; // Position + Normal + Tangent + Bitangent + Color + UV
             _indices = new ushort[_model.Meshes.Sum(m => m.Faces.Sum(face => face.IndexCount))];
@@ -181,12 +182,17 @@ namespace Shaders
 
             GL.VertexAttribPointer(CurrentShader.TexCoordLocation, 2, VertexAttribPointerType.Float, false, size * sizeof(float), 15 * sizeof(float));
             GL.EnableVertexAttribArray(CurrentShader.TexCoordLocation);
-            
+
             // Load the textures
 
-            LoadTexture("Models/eyeball_DIFFUSE.png", TextureUnit.Texture0, CurrentShader.DiffuseMapLocation);
-            LoadTexture("Models/eyeball_SPECULAR.png", TextureUnit.Texture1, CurrentShader.SpecularMapLocation);
-            LoadTexture("Models/eyeball_NORMAL.png", TextureUnit.Texture2, CurrentShader.NormalMapLocation);
+            /*LoadTexture("Models/eyeball_diffuse.png", TextureUnit.Texture0, CurrentShader.DiffuseMapLocation);
+            LoadTexture("Models/eyeball_specular.png", TextureUnit.Texture1, CurrentShader.SpecularMapLocation);
+            LoadTexture("Models/eyeball_normal.png", TextureUnit.Texture2, CurrentShader.NormalMapLocation);*/
+
+            LoadTexture("Models/floor_albedo.png", TextureUnit.Texture0, CurrentShader.DiffuseMapLocation);
+            LoadTexture("Models/floor_specular2.png", TextureUnit.Texture1, CurrentShader.SpecularMapLocation);
+            LoadTexture("Models/floor_normal.png", TextureUnit.Texture2, CurrentShader.NormalMapLocation);
+            LoadTexture("Models/floor_height.png", TextureUnit.Texture3, CurrentShader.HeightMapLocation);
 
             // Setup input
 
