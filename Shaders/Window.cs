@@ -189,10 +189,10 @@ namespace Shaders
             LoadTexture("Models/eyeball_specular.png", TextureUnit.Texture1, CurrentShader.SpecularMapLocation);
             LoadTexture("Models/eyeball_normal.png", TextureUnit.Texture2, CurrentShader.NormalMapLocation);*/
 
-            LoadTexture("Models/floor_albedo.png", TextureUnit.Texture0, CurrentShader.DiffuseMapLocation);
-            LoadTexture("Models/floor_specular2.png", TextureUnit.Texture1, CurrentShader.SpecularMapLocation);
-            LoadTexture("Models/floor_normal.png", TextureUnit.Texture2, CurrentShader.NormalMapLocation);
-            LoadTexture("Models/floor_height.png", TextureUnit.Texture3, CurrentShader.HeightMapLocation);
+            LoadTexture("Models/wall_diffuse.jpg", TextureUnit.Texture0, CurrentShader.DiffuseMapLocation);
+            LoadTexture("Models/black_specular.png", TextureUnit.Texture1, CurrentShader.SpecularMapLocation);
+            LoadTexture("Models/wall_normal.jpg", TextureUnit.Texture2, CurrentShader.NormalMapLocation);
+            LoadTexture("Models/wall_height.jpg", TextureUnit.Texture3, CurrentShader.HeightMapLocation);
 
             // Setup input
 
