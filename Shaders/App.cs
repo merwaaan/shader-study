@@ -10,14 +10,18 @@ namespace Shaders
     {
         public static App Instance;
 
-        private Set CurrentSet { get; set; }
+        public Matrix4 ViewMatrix;
+        public Matrix4 ProjectionMatrix;
+
+        private float _cameraRotation;
+        private float _cameraAngularSpeed = 0.005f;
+        private float _cameraDistance = 1;
+
+        private Set _currentSet;
 
         private readonly Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>();
         private readonly Dictionary<string, Model> _models = new Dictionary<string, Model>();
         private readonly List<Set> _sets = new List<Set>();
-
-        public Matrix4 ViewMatrix;
-        public Matrix4 ProjectionMatrix;
 
         public App(int width = 900, int height = 900)
             : base(width, height, OpenTK.Graphics.GraphicsMode.Default, "Shaders study")
@@ -31,34 +35,32 @@ namespace Shaders
 
             InitGL();
 
-            LoadShader("Single color", "SingleColor");
-            LoadShader("Vertex colors", "VertexColors");
-            LoadShader("Texture mapping", "TextureMapping");
-            /*LoadShader("Phong shading", "Phong");
-            LoadShader("Normal mapping", "NormalMapping");
-            LoadShader("Parallax mapping", "ParallaxMapping");*/
+            //LoadShader("Single color", "SingleColor");
+            //LoadShader("Vertex colors", "VertexColors");
+            //LoadShader("Texture mapping", "TextureMapping");
+            //LoadShader("Phong shading", "Phong");
+            //LoadShader("Normal mapping", "NormalMapping");
+            LoadShader("Parallax mapping", "ParallaxMapping");
 
             LoadModel("Box", "Models/box.obj");
-            //LoadModel("Eye", "Models/eyeball.obj");
-            /*LoadModel("Wall", "Models/wall.obj").Textures(diffuse: "Models/wall_diffuse.jpg", specular: "Models/black_specular.png", normal: "Models/wall_normal.jpg", height: "Models/wall_height.jpg");
-            LoadModel("Floor", "Models/floor.obj").Textures(diffuse: "Models/wall_diffuse.jpg", specular: "Models/black_specular.png", normal: "Models/wall_normal.jpg", height: "Models/wall_height.jpg");*/
+            LoadModel("Eye", "Models/eyeball.obj").Textures(diffuse: "Models/eyeball_diffuse.png", specular: "Models/eyeball_specular.png", normal: "Models/eyeball_normal.png");
+            LoadModel("Wall", "Models/wall.obj").Textures(diffuse: "Models/wall_diffuse.jpg", specular: "Models/black_specular.png", normal: "Models/wall_normal.jpg", height: "Models/wall_height.jpg");
+            LoadModel("Rocks", "Models/wall.obj").Textures(diffuse: "Models/floor_albedo_ao.png", specular: "Models/floor_specular2.png", normal: "Models/floor_normal.png", height: "Models/floor_height.png");
 
-            CreateSet(new ModelInstance(_models["Box"], _shaders["Single color"]));
-            CreateSet(new ModelInstance(_models["Box"], _shaders["Vertex colors"]));
+            //CreateSet(new ModelInstance(_models["Box"], _shaders["Single color"]));
+            //CreateSet(new ModelInstance(_models["Box"], _shaders["Vertex colors"]));
             //CreateSet(new ModelInstance(_models["Eye"], _shaders["Texture mapping"]));
-            //CreateSet(new ModelInstance(_models["Eye"], _shaders["Single color"]));
+            //CreateSet(new ModelInstance(_models["Eye"], _shaders["Phong shading"]));
+            //CreateSet(new ModelInstance(_models["Eye"], _shaders["Normal mapping"]));
+            CreateSet(new ModelInstance(_models["Rocks"], _shaders["Parallax mapping"]));
+            CreateSet(new ModelInstance(_models["Rocks"], _shaders["Parallax mapping"]));
 
             /*CreateSet(
                 new ModelInstance(_models["Box"], _shaders["Single color"]).Move(Matrix4.CreateTranslation(5, 0, 0)),
                 new ModelInstance(_models["Box"], _shaders["Single color"]).Move(Matrix4.CreateTranslation(0, 5, 0)));*/
 
-            CurrentSet = _sets.Last();
-
-            /*LoadTexture("Models/wall_diffuse.jpg", TextureUnit.Texture0, CurrentShader.DiffuseMapLocation);
-            LoadTexture("Models/black_specular.png", TextureUnit.Texture1, CurrentShader.SpecularMapLocation);
-            LoadTexture("Models/wall_normal.jpg", TextureUnit.Texture2, CurrentShader.NormalMapLocation);
-            LoadTexture("Models/wall_height.jpg", TextureUnit.Texture3, CurrentShader.HeightMapLocation);*/
-
+            _currentSet = _sets.Last();
+            
             ViewMatrix = Matrix4.LookAt(Vector3.UnitZ, Vector3.Zero, Vector3.UnitY);
             ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver2, Width / (float)Height, 0.005f, 100f);
 
@@ -69,11 +71,8 @@ namespace Shaders
         {
             MouseMove += (sender, ev) =>
             {
-                if (Math.Abs(ev.XDelta) > 5)
-                    return;
-
-                //_modelMatrix *= Matrix4.CreateRotationY(0.005f * ev.XDelta);
-                UpdateMatrices();
+                _cameraRotation += _cameraAngularSpeed * ev.XDelta;
+                UpdateViewMatrix();
             };
 
             KeyPress += (sender, ev) =>
@@ -90,16 +89,26 @@ namespace Shaders
             };
         }
 
+        private void UpdateViewMatrix()
+        {
+            var eye = new Vector3(
+                _cameraDistance * (float) Math.Cos(_cameraRotation),
+                0,
+                _cameraDistance * (float) Math.Sin(_cameraRotation));
+
+            ViewMatrix = ViewMatrix = Matrix4.LookAt(eye, Vector3.Zero, Vector3.UnitY);
+        }
+
         private void CycleSets(bool forward = true)
         {
-            var index = _sets.IndexOf(CurrentSet) + 1;
+            var index = _sets.IndexOf(_currentSet) + 1;
 
             if (index >= _sets.Count)
                 index = 0;
             else if (index < 0)
                 index = _sets.Count - 1;
 
-            CurrentSet = _sets[index];
+            _currentSet = _sets[index];
         }
 
         protected override void OnUnload(EventArgs e)
@@ -126,7 +135,7 @@ namespace Shaders
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            CurrentSet.Draw();
+            _currentSet.Draw();
 
             SwapBuffers();
         }

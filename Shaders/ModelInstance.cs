@@ -13,9 +13,9 @@ namespace Shaders
 
         public Model Model { get; }
 
-        public Shader Shader { get; set; }
+        public Shader Shader { get; }
 
-        // TODO
+        // TODO move buffers in Model
         public uint VertexArrayObject;
         public uint VertexBufferObject;
         public uint ElementBufferObject;
@@ -30,6 +30,11 @@ namespace Shaders
             _transform = Matrix4.Identity;
 
             FillBuffers();
+
+            Model.BindTexture(this, "diffuse", TextureUnit.Texture0, Shader.DiffuseMapLocation);
+            Model.BindTexture(this, "specular", TextureUnit.Texture1, Shader.SpecularMapLocation);
+            Model.BindTexture(this, "normal", TextureUnit.Texture2, Shader.NormalMapLocation);
+            Model.BindTexture(this, "height", TextureUnit.Texture3, Shader.HeightMapLocation);
         }
 
         public void Unload()
@@ -79,8 +84,7 @@ namespace Shaders
             //GL.BindVertexArray(0);
         }
 
-        public void Draw()
-        {
+        public void Draw() {
             GL.BindVertexArray(VertexArrayObject);
             GL.UseProgram(Shader.Program);
 

@@ -5,6 +5,7 @@ using System.Linq;
 using Assimp;
 using OpenTK.Graphics.OpenGL4;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
+using System.Collections.Generic;
 
 namespace Shaders
 {
@@ -119,14 +120,21 @@ namespace Shaders
                         Indices[f++] = (ushort)index;
             }
         }
+        private readonly Dictionary<string, string> _texturePaths = new Dictionary<string, string>();
 
         public void Textures(string diffuse = null, string specular = null, string normal = null, string height = null)
         {
-
+            _texturePaths.Add("diffuse", diffuse);
+            _texturePaths.Add("specular", specular);
+            _texturePaths.Add("normal", normal);
+            _texturePaths.Add("height", height);
+            /*if (diffuse != null)
+                LoadTexture(diffuse, TextureUnit.Texture0, CurrentShader.DiffuseMapLocation);*/
         }
 
-        private void LoadTexture(string path, TextureUnit unit, int uniformLocation)
-        {
+        // TODO seprate into load/bind
+        // TODO only bind before rendering
+        public void BindTexture(ModelInstance instance, string name, TextureUnit unit, int uniformLocation) {
             GL.ActiveTexture(unit);
 
             // Generate an ID and bind the texture
@@ -135,6 +143,12 @@ namespace Shaders
             GL.Uniform1(uniformLocation, unit - TextureUnit.Texture0); // layout(binding=?) must match in the shader
 
             // Load the texture data
+
+            string path;
+            _texturePaths.TryGetValue(name, out path);
+            if (path == null)
+                return;
+
             var bitmap = new Bitmap(path);
             var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmapData.Width, bitmapData.Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, bitmapData.Scan0);
