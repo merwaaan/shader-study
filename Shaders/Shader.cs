@@ -30,7 +30,7 @@ namespace Shaders
         public int BitangentLocation { get; private set; }
         public int TexCoordLocation { get; private set; }
 
-        public Shader(Window window, string name)
+        public Shader(App window, string name)
         {
             VertexSource = File.ReadAllText($"Shaders/{name}.vert");
             FragmentSource = File.ReadAllText($"Shaders/{name}.frag");

@@ -1,6 +1,6 @@
 ﻿#version 400
 
-uniform mat4 MVPMatrix;
+uniform mat4 mvp_matrix;
 
 in vec3 vertex_position;
 in vec3 vertex_color;
