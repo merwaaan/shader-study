@@ -4,8 +4,8 @@
     {
         static void Main(string[] args)
         {
-            using (var game = new App())
-                game.Run(60.0);
+            using (var app = new App("Shader study", 900, 900))
+                app.Run(60.0);
         }
     }
 }

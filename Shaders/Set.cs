@@ -3,7 +3,7 @@
 namespace Shaders
 {
     /// <summary>
-    ///     Set of model instances to be rendered.
+    ///     Scene containing model instances to be rendered.
     /// </summary>
     internal class Set
     {
@@ -15,11 +15,11 @@ namespace Shaders
                 Add(instance);
         }
 
-        public void Unload()
+        /*public void Unload()
         {
             foreach (var instance in _modelInstances)
                 instance.Unload();
-        }
+        }*/
 
         public ModelInstance Add(ModelInstance instance)
         {

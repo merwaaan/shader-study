@@ -1,6 +1,7 @@
-﻿using System;
-using OpenTK;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK;
+using OpenTK.Graphics.OpenGL;
+using System;
+using System.Runtime.InteropServices;
 
 namespace Shaders
 {
@@ -16,9 +17,9 @@ namespace Shaders
         public Shader Shader { get; }
 
         // TODO move buffers in Model
-        public uint VertexArrayObject;
-        public uint VertexBufferObject;
-        public uint ElementBufferObject;
+        public int vaoHandle;
+        public int vboHandle;
+        public int eboHandle;
 
         private Matrix4 _transform;
 
@@ -29,7 +30,7 @@ namespace Shaders
 
             _transform = Matrix4.Identity;
 
-            FillBuffers();
+            SetupBuffers();
 
             Model.BindTexture(this, "diffuse", TextureUnit.Texture0, Shader.DiffuseMapLocation);
             Model.BindTexture(this, "specular", TextureUnit.Texture1, Shader.SpecularMapLocation);
@@ -37,34 +38,34 @@ namespace Shaders
             Model.BindTexture(this, "height", TextureUnit.Texture3, Shader.HeightMapLocation);
         }
 
-        public void Unload()
+        /*public void Unload()
         {
             GL.DeleteBuffers(1, ref VertexArrayObject);
             GL.DeleteBuffers(1, ref VertexBufferObject);
             GL.DeleteBuffers(1, ref ElementBufferObject);
-        }
+        }*/
 
-        private void FillBuffers()
+        private void SetupBuffers()
         {
-            // Fill buffers
+            // Fill data buffers
 
-            GL.GenVertexArrays(1, out VertexArrayObject);
-            GL.GenBuffers(1, out VertexBufferObject);
-            GL.GenBuffers(1, out ElementBufferObject);
+            vboHandle = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vboHandle);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Model.Vertices.Length * sizeof(float)), Model.Vertices, BufferUsageHint.StaticDraw);
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObject);
-            GL.BindVertexArray(VertexArrayObject);
-
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(Model.Vertices.Length * sizeof(float)), Model.Vertices, BufferUsageHint.StaticDraw);
+            eboHandle = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, eboHandle);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(Model.Indices.Length * sizeof(ushort)), Model.Indices, BufferUsageHint.StaticDraw);
 
-            // Setup attributes
+            // Setup data layout
+
+            vaoHandle = GL.GenVertexArray();
+            GL.BindVertexArray(vaoHandle);
 
             const int size = 17;
 
             GL.EnableVertexAttribArray(Shader.PositionLocation);
-            GL.VertexAttribPointer(Shader.PositionLocation, 3, VertexAttribPointerType.Float, false, size * sizeof(float), 0);
+            GL.VertexAttribPointer(Shader.PositionLocation, 3, VertexAttribPointerType.Float, false, size * sizeof(float), IntPtr.Zero);
 
             GL.EnableVertexAttribArray(Shader.NormalLocation);
             GL.VertexAttribPointer(Shader.NormalLocation, 3, VertexAttribPointerType.Float, false, size * sizeof(float), 3 * sizeof(float));
@@ -80,28 +81,29 @@ namespace Shaders
 
             GL.EnableVertexAttribArray(Shader.TexCoordLocation);
             GL.VertexAttribPointer(Shader.TexCoordLocation, 2, VertexAttribPointerType.Float, false, size * sizeof(float), 15 * sizeof(float));
-            
-            //GL.BindVertexArray(0);
+
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, eboHandle);
+
+            GL.BindVertexArray(0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
 
         public void Draw() {
-            GL.BindVertexArray(VertexArrayObject);
-            GL.UseProgram(Shader.Program);
+            GL.UseProgram(Shader.ProgramHandle);
 
             // Update the matrix uniforms
             var mvp = _transform * App.Instance.ViewMatrix * App.Instance.ProjectionMatrix;
             GL.UniformMatrix4(Shader.ModelMatrixLocation, false, ref _transform);
             GL.UniformMatrix4(Shader.MvpMatrixLocation, false, ref mvp);
 
-            GL.DrawElements(PrimitiveType.Triangles, Model.Indices.Length, DrawElementsType.UnsignedShort, Model.Indices);
-
-            GL.UseProgram(0);
-            GL.BindVertexArray(0);
+            GL.BindVertexArray(vaoHandle);
+            GL.DrawElements(BeginMode.Triangles, Model.Indices.Length, DrawElementsType.UnsignedShort, IntPtr.Zero);
         }
 
-        public ModelInstance Move(Matrix4 transform)
+        public ModelInstance Move(float x, float y, float z)
         {
-            _transform = transform;
+            _transform = Matrix4.CreateTranslation(x, y, z);
             return this;
         }
     }
