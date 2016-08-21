@@ -20,8 +20,9 @@ namespace Shaders
 
         private Set _currentSet;
 
-        private readonly Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>();
         private readonly Dictionary<string, Model> _models = new Dictionary<string, Model>();
+        private readonly Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>();
+        private readonly Dictionary<string, Material> _materials = new Dictionary<string, Material>();
         private readonly List<Set> _sets = new List<Set>();
 
         public App(string name, int width = 900, int height = 900)
@@ -72,7 +73,14 @@ namespace Shaders
             };
 
             // Load assets
-
+            
+            // TODO omit dir
+            LoadModel("Box", "Models/box.dae");
+            LoadModel("Eye", "Models/eyeball.obj");
+            LoadModel("Wall", "Models/wall.obj");
+            LoadModel("Rocks", "Models/wall.obj");
+            LoadModel("Floor", "Models/floor.obj");
+            
             LoadShader("Single color", "SingleColor");
             LoadShader("Vertex colors", "VertexColors");
             LoadShader("Texture mapping", "TextureMapping");
@@ -80,19 +88,37 @@ namespace Shaders
             LoadShader("Normal mapping", "NormalMapping");
             LoadShader("Parallax mapping", "ParallaxMapping");
 
-            LoadModel("Box", "Models/box.dae");
-            LoadModel("Eye", "Models/eyeball.obj").Textures(diffuse: "Models/eyeball_diffuse.png", specular: "Models/eyeball_specular.png", normal: "Models/eyeball_normal.png");
-            LoadModel("Wall", "Models/wall.obj").Textures(diffuse: "Models/wall_diffuse.jpg", specular: "Models/black_specular.png", normal: "Models/wall_normal.jpg", height: "Models/wall_height.jpg");
-            LoadModel("Rocks", "Models/wall.obj").Textures(diffuse: "Models/floor_albedo_ao.png", specular: "Models/floor_specular2.png", normal: "Models/floor_normal.png", height: "Models/floor_height.png");
-            LoadModel("Floor", "Models/floor.obj");
+            CreateMaterial("Single color", _shaders["Single color"]);
+            CreateMaterial("Vertex colors", _shaders["Vertex colors"]);
+
+            CreateMaterial("Eye diffuse", _shaders["Texture mapping"])
+                .Texture(Material.TextureType.Diffuse, "Models/eyeball_diffuse.png");
+            CreateMaterial("Eye diffuse, specular", _shaders["Phong shading"])
+                .Texture(Material.TextureType.Diffuse, "Models/eyeball_diffuse.png")
+                .Texture(Material.TextureType.Specular, "Models/eyeball_specular.png");
+            CreateMaterial("Eye diffuse, specular, normal", _shaders["Normal mapping"])
+                .Texture(Material.TextureType.Diffuse, "Models/eyeball_diffuse.png")
+                .Texture(Material.TextureType.Specular, "Models/eyeball_specular.png")
+                .Texture(Material.TextureType.Normal, "Models/eyeball_normal.png");
+
+            CreateMaterial("Rock", _shaders["Texture mapping"])
+                            .Texture(Material.TextureType.Diffuse, "Models/floor_albedo_ao.png")
+                            .Texture(Material.TextureType.Specular, "Models/floor_specular2.png")
+                            .Texture(Material.TextureType.Normal, "Models/floor_normal.png")
+                            .Texture(Material.TextureType.Height, "Models/floor_height.png");
+            CreateMaterial("Rock with parallax", _shaders["Parallax mapping"])
+                            .Texture(Material.TextureType.Diffuse, "Models/floor_albedo_ao.png")
+                            .Texture(Material.TextureType.Specular, "Models/floor_specular2.png")
+                            .Texture(Material.TextureType.Normal, "Models/floor_normal.png")
+                            .Texture(Material.TextureType.Height, "Models/floor_height.png");
             
-            CreateSet(new ModelInstance(_models["Box"], _shaders["Single color"]));
-            CreateSet(new ModelInstance(_models["Box"], _shaders["Vertex colors"]));
-            CreateSet(new ModelInstance(_models["Eye"], _shaders["Texture mapping"]));
-            CreateSet(new ModelInstance(_models["Eye"], _shaders["Phong shading"]));
-            CreateSet(new ModelInstance(_models["Eye"], _shaders["Normal mapping"]));
-            CreateSet(new ModelInstance(_models["Rocks"], _shaders["Texture mapping"]));
-            CreateSet(new ModelInstance(_models["Rocks"], _shaders["Parallax mapping"]));
+            CreateSet(new ModelInstance(_models["Box"], _materials["Single color"]));
+            CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
+            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse"]));
+            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse, specular"]));
+            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse, specular, normal"]));
+            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock"]));
+            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock with parallax"]));
 
             /*CreateSet(
                 new ModelInstance(_models["Floor"], _shaders["Single color"]).Move(0, -0.5f, 0),
@@ -138,6 +164,13 @@ namespace Shaders
             var model = new Model(path);
             _models.Add(name, model);
             return model;
+        }
+
+        private Material CreateMaterial(string name, Shader shader)
+        {
+            var material = new Material(shader);
+            _materials.Add(name, material);
+            return material;
         }
 
         private Set CreateSet(params ModelInstance[] instances)

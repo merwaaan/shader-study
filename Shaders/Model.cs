@@ -1,9 +1,6 @@
 ﻿using System.Linq;
 using Assimp;
-using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System;
 
 namespace Shaders
@@ -16,10 +13,13 @@ namespace Shaders
         public float[] Vertices { get; }
         public ushort[] Indices { get; }
 
-        public int VboHandle { get; }
-        public int EboHandle { get; }
+        public int VboHandle => _vboHandle;
+        public int EboHandle => _eboHandle;
 
         private readonly Scene _model;
+
+        private int _vboHandle;
+        private int _eboHandle;
 
         private static readonly AssimpContext Importer;
 
@@ -121,55 +121,22 @@ namespace Shaders
 
             // Fill the data buffers
 
-            VboHandle = GL.GenBuffer();
+            _vboHandle = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VboHandle);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Vertices.Length * sizeof(float)), Vertices, BufferUsageHint.StaticDraw);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
-            EboHandle = GL.GenBuffer();
+            _eboHandle = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, EboHandle);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr) (Indices.Length * sizeof(ushort)), Indices, BufferUsageHint.StaticDraw);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
-
-        private readonly Dictionary<string, string> _texturePaths = new Dictionary<string, string>();
-
-        public void Textures(string diffuse = null, string specular = null, string normal = null, string height = null)
+        
+        public void Unload()
         {
-            _texturePaths.Add("diffuse", diffuse);
-            _texturePaths.Add("specular", specular);
-            _texturePaths.Add("normal", normal);
-            _texturePaths.Add("height", height);
-        }
-
-        // TODO seprate into load/bind
-        // TODO only bind before rendering
-        public void BindTexture(ModelInstance instance, string name, TextureUnit unit, int uniformLocation)
-        {
-            GL.ActiveTexture(unit);
-
-            // Generate an ID and bind the texture
-            var textureId = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, textureId);
-            GL.Uniform1(uniformLocation, unit - TextureUnit.Texture0); // layout(binding=?) must match in the shader
-
-            // Load the texture data
-
-            string path;
-            _texturePaths.TryGetValue(name, out path);
-            if (path == null)
-                return;
-
-            var bitmap = new Bitmap(path);
-            var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmapData.Width, bitmapData.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, bitmapData.Scan0);
-            bitmap.UnlockBits(bitmapData);
-
-            //
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMagFilter.Linear);
-
-            Console.WriteLine($"Loaded texture {path} with ID {textureId}, uniform location {uniformLocation}, unit {unit}");
+            GL.DeleteBuffers(1, ref _vboHandle);
+            GL.DeleteBuffers(1, ref _eboHandle);
+            _vboHandle = _eboHandle = -1;
         }
     }
 }

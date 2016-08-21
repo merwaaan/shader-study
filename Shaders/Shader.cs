@@ -90,17 +90,29 @@ namespace Shaders
             GL.BindAttribLocation(ProgramHandle, BitangentLocation, "vertex_bitangent");
             GL.BindAttribLocation(ProgramHandle, TexCoordLocation, "vertex_texcoord");
         }
-        /*
-        public void Dispose()
+
+        public int GetTextureLocation(Material.TextureType type)
         {
-            if (ProgramHandler != 0)
-                GL.DeleteProgram(ProgramHandler);
+            switch (type)
+            {
+                case Material.TextureType.Diffuse:
+                    return DiffuseMapLocation;
+                case Material.TextureType.Specular:
+                    return SpecularMapLocation;
+                case Material.TextureType.Normal:
+                    return NormalLocation;
+                case Material.TextureType.Height:
+                    return HeightMapLocation;
+                default:
+                    throw new ArgumentException(nameof(type));
+            }
+        }
 
-            if (FragmentShaderHandler != 0)
-                GL.DeleteShader(FragmentShaderHandler);
-
-            if (VertexShaderHandle != 0)
-                GL.DeleteShader(VertexShaderHandle);
-        }*/
+        public void Unload()
+        {
+            GL.DeleteProgram(ProgramHandle);
+            GL.DeleteShader(FragmentShaderHandler);
+            GL.DeleteShader(VertexShaderHandle);
+        }
     }
 }
