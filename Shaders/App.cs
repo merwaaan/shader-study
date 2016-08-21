@@ -13,22 +13,24 @@ namespace Shaders
 
         public const string AssetsDirectory = "Models";
 
+        // TODO create camera class
         public Matrix4 ViewMatrix;
         public Matrix4 ProjectionMatrix;
-
         private float _cameraRotation;
         private float _cameraAngularSpeed = 0.005f;
         private float _cameraDistance = 1;
         private float _cameraZoomSpeed = 0.2f;
 
+        // TODO create asset handling class
         private readonly Dictionary<string, Model> _models = new Dictionary<string, Model>();
         private readonly Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>();
         private readonly Dictionary<string, Material> _materials = new Dictionary<string, Material>();
         private readonly List<Set> _sets = new List<Set>();
 
-        private Set _currentSet;
+        private GUI _gui;
 
-        private bool _orbitLight;
+        private Set _currentSet;
+        private bool _orbitLight; // TODO move in set?
 
         public App(string name, int width = 900, int height = 900)
             : base(width, height, OpenTK.Graphics.GraphicsMode.Default, name)
@@ -110,15 +112,12 @@ namespace Shaders
                 .Texture(Material.TextureType.Normal, "eyeball_normal.png");
 
             CreateMaterial("Rock", _shaders["Texture mapping"])
-                            .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png")
-                            .Texture(Material.TextureType.Specular, "floor_specular2.png")
-                            .Texture(Material.TextureType.Normal, "floor_normal.png")
-                            .Texture(Material.TextureType.Height, "floor_height.png");
+                .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png");
             CreateMaterial("Rock parallax", _shaders["Parallax mapping"])
-                            .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png")
-                            .Texture(Material.TextureType.Specular, "floor_specular2.png")
-                            .Texture(Material.TextureType.Normal, "floor_normal.png")
-                            .Texture(Material.TextureType.Height, "floor_height.png");
+                .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png")
+                .Texture(Material.TextureType.Specular, "floor_specular2.png")
+                .Texture(Material.TextureType.Normal, "floor_normal.png")
+                .Texture(Material.TextureType.Height, "floor_height.png");
 
             CreateSet(new ModelInstance(_models["Box"], _materials["Single color"]));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
@@ -126,13 +125,15 @@ namespace Shaders
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye Phong"])).SetLight(new PointLight(5, 1, 10));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye normal"])).SetLight(new PointLight(5, 1, 10));
             CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock"]));
-            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"])).SetLight(new PointLight(5, 1, 10));
+            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"])).SetLight(new PointLight(1, 5, -10));
 
             /*CreateSet(
                 new ModelInstance(_models["Floor"], _shaders["Single color"]).Move(0, -0.5f, 0),
                 new ModelInstance(_models["Box"], _shaders["Single color"]));*/
 
             _currentSet = _sets.Last();
+
+            _gui = new GUI(this);
         }
 
         protected override void OnUnload(EventArgs e)
@@ -160,7 +161,8 @@ namespace Shaders
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            _currentSet.Draw();
+            _currentSet?.Draw();
+            _gui?.Draw(e.Time);
 
             SwapBuffers();
         }

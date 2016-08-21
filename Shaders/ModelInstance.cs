@@ -83,6 +83,9 @@ namespace Shaders
 
             GL.BindVertexArray(_vaoHandle);
             GL.DrawElements(BeginMode.Triangles, Model.Indices.Length, DrawElementsType.UnsignedShort, IntPtr.Zero);
+            GL.BindVertexArray(0);
+
+            GL.UseProgram(0);
         }
 
         public ModelInstance Move(float x, float y, float z)

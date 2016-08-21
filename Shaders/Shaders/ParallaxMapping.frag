@@ -45,7 +45,7 @@ void main(void)
 
 	// Specular component
 	float specular = 0.0;
-
+    
 	if (lambertian > 0.0) {
 	
 		vec3 view_direction = normalize(-position).xyz;

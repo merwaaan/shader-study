@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 
 namespace Shaders
 {
@@ -28,12 +29,16 @@ namespace Shaders
         public Material(Shader shader)
         {
             Shader = shader;
+
+            // Pre-fill the texture handles with null entries
+            foreach (var x in Enum.GetValues(typeof(TextureType)).Cast<TextureType>())
+                _textureHandles.Add(x, -1);
         }
 
         public Material Texture(TextureType type, string path)
         {
             var handle = CreateTexture(path, (TextureUnit) type, Shader.GetTextureLocation(type));
-            _textureHandles.Add(type, handle);
+            _textureHandles[type] = handle;
             return this;
         }
 
@@ -55,6 +60,8 @@ namespace Shaders
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMagFilter.Linear);
 
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
             Console.WriteLine($"Loaded texture {fullPath} with ID {textureHandle}, uniform location {uniformLocation}, unit {unit}");
 
             return textureHandle;
@@ -63,14 +70,21 @@ namespace Shaders
         internal void Bind()
         {
             foreach (var texture in _textureHandles)
-            {
+            {            
                 var type = texture.Key;
                 var unit = (TextureUnit) type;
                 var handle = texture.Value;
-
+                
                 GL.ActiveTexture(unit);
-                GL.BindTexture(TextureTarget.Texture2D, handle);
-                GL.Uniform1(Shader.GetTextureLocation(type), unit - TextureUnit.Texture0); // layout(binding=?) must match in the shader
+                if (handle <= 0)
+                {
+                    //GL.BindTexture(TextureTarget.Texture2D, 0);
+                }
+                else
+                {
+                    GL.BindTexture(TextureTarget.Texture2D, handle);
+                    GL.Uniform1(Shader.GetTextureLocation(type), unit - TextureUnit.Texture0); // layout(binding=?) must match in the shader
+                }
             }
         }
     }
