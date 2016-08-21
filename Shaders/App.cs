@@ -28,6 +28,8 @@ namespace Shaders
 
         private Set _currentSet;
 
+        private bool _orbitLight;
+
         public App(string name, int width = 900, int height = 900)
             : base(width, height, OpenTK.Graphics.GraphicsMode.Default, name)
         {
@@ -72,6 +74,9 @@ namespace Shaders
                     case '8':
                         CycleSets();
                         break;
+                    case 'l':
+                        _orbitLight = !_orbitLight;
+                        break;
                 }
             };
 
@@ -83,7 +88,7 @@ namespace Shaders
             LoadModel("Wall", "wall.obj");
             LoadModel("Rocks", "wall.obj");
             LoadModel("Floor", "floor.obj");
-            
+
             LoadShader("Single color", "SingleColor");
             LoadShader("Vertex colors", "VertexColors");
             LoadShader("Texture mapping", "TextureMapping");
@@ -114,14 +119,14 @@ namespace Shaders
                             .Texture(Material.TextureType.Specular, "floor_specular2.png")
                             .Texture(Material.TextureType.Normal, "floor_normal.png")
                             .Texture(Material.TextureType.Height, "floor_height.png");
-            
+
             CreateSet(new ModelInstance(_models["Box"], _materials["Single color"]));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye Phong"])).SetLight(new PointLight(5, 1, 10));
-            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye normal"]));
+            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye normal"])).SetLight(new PointLight(5, 1, 10));
             CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock"]));
-            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"]));
+            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"])).SetLight(new PointLight(5, 1, 10));
 
             /*CreateSet(
                 new ModelInstance(_models["Floor"], _shaders["Single color"]).Move(0, -0.5f, 0),
@@ -133,7 +138,7 @@ namespace Shaders
         protected override void OnUnload(EventArgs e)
         {
             foreach (var set in _sets)
-                 set.Unload();
+                set.Unload();
 
             foreach (var shader in _shaders.Values)
                 shader.Unload();
@@ -163,6 +168,10 @@ namespace Shaders
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
+
+            // Orbit the light around the origin of the scene
+            if (_orbitLight && _currentSet.Light != null)
+                _currentSet.Light.Position = Vector3.Transform(_currentSet.Light.Position, Matrix4.CreateRotationY(0.01f));
         }
 
         private Shader LoadShader(string name, string path)

@@ -6,6 +6,7 @@ layout(binding=2) uniform sampler2D normal_map;
 layout(binding=3) uniform sampler2D height_map;
 
 uniform mat4 model_matrix;
+uniform vec3 light_position;
 
 in vec4 position;
 in vec2 uv;
@@ -16,7 +17,6 @@ in vec3 view_position_tspace;
 
 out vec4 frag_color;
 
-const vec3 light_position = vec3(5.0, 1.0, 10.0);
 const vec3 ambient_color = vec3(0.01, 0.01, 0.01);
 const vec3 specular_color = vec3(0.1, 0.1, 0.1);
 const float shininess = 64.0;

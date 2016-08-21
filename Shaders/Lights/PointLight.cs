@@ -5,7 +5,7 @@ namespace Shaders.Lights
 {
     public class PointLight : ILight
     {
-        public Vector3 Position { get; }
+        public Vector3 Position { get; set; }
 
         public PointLight(Vector3 position)
         {

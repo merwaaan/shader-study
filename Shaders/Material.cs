@@ -41,7 +41,6 @@ namespace Shaders
         {
             GL.ActiveTexture(unit);
 
-            // Generate an ID and bind the texture
             var textureHandle = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, textureHandle);
             GL.Uniform1(uniformLocation, unit - TextureUnit.Texture0); // layout(binding=?) must match in the shader
