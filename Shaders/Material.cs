@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 
 namespace Shaders
 {
@@ -46,7 +47,8 @@ namespace Shaders
             GL.Uniform1(uniformLocation, unit - TextureUnit.Texture0); // layout(binding=?) must match in the shader
 
             // Load the texture data
-            var bitmap = new Bitmap(path);
+            var fullPath = Path.Combine(App.AssetsDirectory, path);
+            var bitmap = new Bitmap(fullPath);
             var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmapData.Width, bitmapData.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, bitmapData.Scan0);
             bitmap.UnlockBits(bitmapData);
@@ -54,7 +56,7 @@ namespace Shaders
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMagFilter.Linear);
 
-            Console.WriteLine($"Loaded texture {path} with ID {textureHandle}, uniform location {uniformLocation}, unit {unit}");
+            Console.WriteLine($"Loaded texture {fullPath} with ID {textureHandle}, uniform location {uniformLocation}, unit {unit}");
 
             return textureHandle;
         }

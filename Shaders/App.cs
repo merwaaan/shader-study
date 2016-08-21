@@ -10,6 +10,8 @@ namespace Shaders
     {
         public static App Instance;
 
+        public const string AssetsDirectory = "Models";
+
         public Matrix4 ViewMatrix;
         public Matrix4 ProjectionMatrix;
 
@@ -75,11 +77,11 @@ namespace Shaders
             // Load assets
             
             // TODO omit dir
-            LoadModel("Box", "Models/box.dae");
-            LoadModel("Eye", "Models/eyeball.obj");
-            LoadModel("Wall", "Models/wall.obj");
-            LoadModel("Rocks", "Models/wall.obj");
-            LoadModel("Floor", "Models/floor.obj");
+            LoadModel("Box", "box.dae");
+            LoadModel("Eye", "eyeball.obj");
+            LoadModel("Wall", "wall.obj");
+            LoadModel("Rocks", "wall.obj");
+            LoadModel("Floor", "floor.obj");
             
             LoadShader("Single color", "SingleColor");
             LoadShader("Vertex colors", "VertexColors");
@@ -92,25 +94,25 @@ namespace Shaders
             CreateMaterial("Vertex colors", _shaders["Vertex colors"]);
 
             CreateMaterial("Eye diffuse", _shaders["Texture mapping"])
-                .Texture(Material.TextureType.Diffuse, "Models/eyeball_diffuse.png");
+                .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png");
             CreateMaterial("Eye diffuse, specular", _shaders["Phong shading"])
-                .Texture(Material.TextureType.Diffuse, "Models/eyeball_diffuse.png")
-                .Texture(Material.TextureType.Specular, "Models/eyeball_specular.png");
+                .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png")
+                .Texture(Material.TextureType.Specular, "eyeball_specular.png");
             CreateMaterial("Eye diffuse, specular, normal", _shaders["Normal mapping"])
-                .Texture(Material.TextureType.Diffuse, "Models/eyeball_diffuse.png")
-                .Texture(Material.TextureType.Specular, "Models/eyeball_specular.png")
-                .Texture(Material.TextureType.Normal, "Models/eyeball_normal.png");
+                .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png")
+                .Texture(Material.TextureType.Specular, "eyeball_specular.png")
+                .Texture(Material.TextureType.Normal, "eyeball_normal.png");
 
             CreateMaterial("Rock", _shaders["Texture mapping"])
-                            .Texture(Material.TextureType.Diffuse, "Models/floor_albedo_ao.png")
-                            .Texture(Material.TextureType.Specular, "Models/floor_specular2.png")
-                            .Texture(Material.TextureType.Normal, "Models/floor_normal.png")
-                            .Texture(Material.TextureType.Height, "Models/floor_height.png");
+                            .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png")
+                            .Texture(Material.TextureType.Specular, "floor_specular2.png")
+                            .Texture(Material.TextureType.Normal, "floor_normal.png")
+                            .Texture(Material.TextureType.Height, "floor_height.png");
             CreateMaterial("Rock with parallax", _shaders["Parallax mapping"])
-                            .Texture(Material.TextureType.Diffuse, "Models/floor_albedo_ao.png")
-                            .Texture(Material.TextureType.Specular, "Models/floor_specular2.png")
-                            .Texture(Material.TextureType.Normal, "Models/floor_normal.png")
-                            .Texture(Material.TextureType.Height, "Models/floor_height.png");
+                            .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png")
+                            .Texture(Material.TextureType.Specular, "floor_specular2.png")
+                            .Texture(Material.TextureType.Normal, "floor_normal.png")
+                            .Texture(Material.TextureType.Height, "floor_height.png");
             
             CreateSet(new ModelInstance(_models["Box"], _materials["Single color"]));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));

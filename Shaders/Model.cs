@@ -2,6 +2,7 @@
 using Assimp;
 using OpenTK.Graphics.OpenGL;
 using System;
+using System.IO;
 
 namespace Shaders
 {
@@ -30,7 +31,8 @@ namespace Shaders
 
         public Model(string path)
         {
-            _model = Importer.ImportFile(path, PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.CalculateTangentSpace);
+            var fullPath = Path.Combine(App.AssetsDirectory, path);
+            _model = Importer.ImportFile(fullPath, PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.CalculateTangentSpace);
 
             // Load the mesh data
             // Layout: position + normal + tangent + bitangent + color + tex coords
