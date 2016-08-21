@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Shaders.Lights;
+using System.Collections.Generic;
 
 namespace Shaders
 {
@@ -7,30 +8,32 @@ namespace Shaders
     /// </summary>
     internal class Set
     {
+        public ILight Light { get; private set; }
+
         private readonly List<ModelInstance> _modelInstances = new List<ModelInstance>();
 
         public Set(params ModelInstance[] instances)
         {
             foreach (var instance in instances)
-                Add(instance);
+                _modelInstances.Add(instance);
         }
 
-        /*public void Unload()
+        public void Unload()
         {
             foreach (var instance in _modelInstances)
                 instance.Unload();
-        }*/
-
-        public ModelInstance Add(ModelInstance instance)
-        {
-            _modelInstances.Add(instance);
-            return instance;
         }
-
+        
         public void Draw()
         {
             foreach (var instance in _modelInstances)
-                instance.Draw();
+                instance.Draw(this);
+        }
+
+        public Set SetLight(ILight light)
+        {
+            Light = light;
+            return this;
         }
     }
 }

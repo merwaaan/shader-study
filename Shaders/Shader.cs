@@ -20,6 +20,8 @@ namespace Shaders
         public int NormalMapLocation { get; private set; }
         public int HeightMapLocation { get; private set; }
 
+        public int LightPositionLocation { get; private set; }
+
         public int PositionLocation { get; private set; }
         public int ColorLocation { get; private set; }
         public int NormalLocation { get; private set; }
@@ -75,6 +77,8 @@ namespace Shaders
             SpecularMapLocation = GL.GetUniformLocation(ProgramHandle, "specular_map");
             NormalMapLocation = GL.GetUniformLocation(ProgramHandle, "normal_map");
             HeightMapLocation = GL.GetUniformLocation(ProgramHandle, "height_map");
+
+            LightPositionLocation = GL.GetUniformLocation(ProgramHandle, "light_position");
 
             PositionLocation = GL.GetAttribLocation(ProgramHandle, "vertex_position");
             ColorLocation = GL.GetAttribLocation(ProgramHandle, "vertex_color");

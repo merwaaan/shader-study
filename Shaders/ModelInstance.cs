@@ -1,7 +1,6 @@
 ﻿using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System;
-using System.Runtime.InteropServices;
 
 namespace Shaders
 {
@@ -67,7 +66,7 @@ namespace Shaders
             GL.DeleteBuffers(1, ref _vaoHandle);
         }
 
-        public void Draw()
+        public void Draw(Set set)
         {
             GL.UseProgram(Material.Shader.ProgramHandle);
 
@@ -76,7 +75,12 @@ namespace Shaders
             GL.UniformMatrix4(Material.Shader.ModelMatrixLocation, false, ref _transform);
             GL.UniformMatrix4(Material.Shader.MvpMatrixLocation, false, ref mvp);
 
+            // Update the light parameters
+            set.Light?.Bind(Material.Shader);
+
+            // Update the material parameters
             Material.Bind();
+
             GL.BindVertexArray(_vaoHandle);
             GL.DrawElements(BeginMode.Triangles, Model.Indices.Length, DrawElementsType.UnsignedShort, IntPtr.Zero);
         }

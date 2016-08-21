@@ -1,5 +1,6 @@
 ﻿using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using Shaders.Lights;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,12 +21,12 @@ namespace Shaders
         private float _cameraDistance = 1;
         private float _cameraZoomSpeed = 0.2f;
 
-        private Set _currentSet;
-
         private readonly Dictionary<string, Model> _models = new Dictionary<string, Model>();
         private readonly Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>();
         private readonly Dictionary<string, Material> _materials = new Dictionary<string, Material>();
         private readonly List<Set> _sets = new List<Set>();
+
+        private Set _currentSet;
 
         public App(string name, int width = 900, int height = 900)
             : base(width, height, OpenTK.Graphics.GraphicsMode.Default, name)
@@ -75,8 +76,8 @@ namespace Shaders
             };
 
             // Load assets
-            
-            // TODO omit dir
+            // TODO add asset handling class
+
             LoadModel("Box", "box.dae");
             LoadModel("Eye", "eyeball.obj");
             LoadModel("Wall", "wall.obj");
@@ -95,10 +96,10 @@ namespace Shaders
 
             CreateMaterial("Eye diffuse", _shaders["Texture mapping"])
                 .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png");
-            CreateMaterial("Eye diffuse, specular", _shaders["Phong shading"])
+            CreateMaterial("Eye Phong", _shaders["Phong shading"])
                 .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png")
                 .Texture(Material.TextureType.Specular, "eyeball_specular.png");
-            CreateMaterial("Eye diffuse, specular, normal", _shaders["Normal mapping"])
+            CreateMaterial("Eye normal", _shaders["Normal mapping"])
                 .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png")
                 .Texture(Material.TextureType.Specular, "eyeball_specular.png")
                 .Texture(Material.TextureType.Normal, "eyeball_normal.png");
@@ -108,7 +109,7 @@ namespace Shaders
                             .Texture(Material.TextureType.Specular, "floor_specular2.png")
                             .Texture(Material.TextureType.Normal, "floor_normal.png")
                             .Texture(Material.TextureType.Height, "floor_height.png");
-            CreateMaterial("Rock with parallax", _shaders["Parallax mapping"])
+            CreateMaterial("Rock parallax", _shaders["Parallax mapping"])
                             .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png")
                             .Texture(Material.TextureType.Specular, "floor_specular2.png")
                             .Texture(Material.TextureType.Normal, "floor_normal.png")
@@ -117,10 +118,10 @@ namespace Shaders
             CreateSet(new ModelInstance(_models["Box"], _materials["Single color"]));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse"]));
-            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse, specular"]));
-            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse, specular, normal"]));
+            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye Phong"])).SetLight(new PointLight(5, 1, 10));
+            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye normal"]));
             CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock"]));
-            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock with parallax"]));
+            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"]));
 
             /*CreateSet(
                 new ModelInstance(_models["Floor"], _shaders["Single color"]).Move(0, -0.5f, 0),
@@ -131,27 +132,37 @@ namespace Shaders
 
         protected override void OnUnload(EventArgs e)
         {
-            /*foreach (var set in _sets)
+            foreach (var set in _sets)
                  set.Unload();
-                 */
-            // TODO delete shaders
-            //GL.DeleteProgram(CurrentShader.Program);
+
+            foreach (var shader in _shaders.Values)
+                shader.Unload();
+
+            foreach (var model in _models.Values)
+                model.Unload();
         }
 
-        /*protected override void OnResize(EventArgs e)
+        protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
 
             GL.Viewport(0, 0, Width, Height);
-        }*/
+        }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            base.OnRenderFrame(e);
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             _currentSet.Draw();
 
             SwapBuffers();
+        }
+
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
         }
 
         private Shader LoadShader(string name, string path)
