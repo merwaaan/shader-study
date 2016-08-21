@@ -13,10 +13,13 @@ namespace Shaders
     /// </summary>
     class Model
     {
-        private readonly Scene _model;
+        public float[] Vertices { get; }
+        public ushort[] Indices { get; }
 
-        public ushort[] Indices;
-        public float[] Vertices;
+        public int VboHandle { get; }
+        public int EboHandle { get; }
+
+        private readonly Scene _model;
 
         private static readonly AssimpContext Importer;
 
@@ -29,12 +32,9 @@ namespace Shaders
         {
             _model = Importer.ImportFile(path, PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.CalculateTangentSpace);
 
-            LoadMeshData();
-        }
+            // Load the mesh data
+            // Layout: position + normal + tangent + bitangent + color + tex coords
 
-        private void LoadMeshData()
-        {
-            // Position + Normal + Tangent + Bitangent + Color + UV
             Vertices = new float[_model.Meshes.Sum(m => m.Vertices.Count) * (3 + 3 + 3 + 3 + 3 + 2)];
             Indices = new ushort[_model.Meshes.Sum(m => m.Faces.Sum(face => face.IndexCount))];
 
@@ -116,8 +116,20 @@ namespace Shaders
 
                 foreach (var face in mesh.Faces)
                     foreach (var index in face.Indices)
-                        Indices[f++] = (ushort)index;
+                        Indices[f++] = (ushort) index;
             }
+
+            // Fill the data buffers
+
+            VboHandle = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VboHandle);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Vertices.Length * sizeof(float)), Vertices, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+            EboHandle = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EboHandle);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr) (Indices.Length * sizeof(ushort)), Indices, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
 
         private readonly Dictionary<string, string> _texturePaths = new Dictionary<string, string>();
@@ -132,7 +144,8 @@ namespace Shaders
 
         // TODO seprate into load/bind
         // TODO only bind before rendering
-        public void BindTexture(ModelInstance instance, string name, TextureUnit unit, int uniformLocation) {
+        public void BindTexture(ModelInstance instance, string name, TextureUnit unit, int uniformLocation)
+        {
             GL.ActiveTexture(unit);
 
             // Generate an ID and bind the texture
@@ -153,8 +166,8 @@ namespace Shaders
             bitmap.UnlockBits(bitmapData);
 
             //
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMagFilter.Linear);
 
             Console.WriteLine($"Loaded texture {path} with ID {textureId}, uniform location {uniformLocation}, unit {unit}");
         }
