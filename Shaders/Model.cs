@@ -9,7 +9,7 @@ namespace Shaders
     /// <summary>
     ///     Data of a 3D model.
     /// </summary>
-    class Model
+    public class Model
     {
         public float[] Vertices { get; }
         public ushort[] Indices { get; }

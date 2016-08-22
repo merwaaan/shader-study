@@ -13,6 +13,9 @@ namespace Shaders
 
         public const string AssetsDirectory = "Models";
 
+        public Set CurrentSet;
+        public int CurrentSetIndex => _sets.IndexOf(CurrentSet);
+
         // TODO create camera class
         public Matrix4 ViewMatrix;
         public Matrix4 ProjectionMatrix;
@@ -28,9 +31,6 @@ namespace Shaders
         private readonly List<Set> _sets = new List<Set>();
 
         private GUI _gui;
-
-        private Set _currentSet;
-        private bool _orbitLight; // TODO move in set?
 
         public App(string name, int width = 900, int height = 900)
             : base(width, height, OpenTK.Graphics.GraphicsMode.Default, name)
@@ -54,14 +54,28 @@ namespace Shaders
             UpdateViewMatrix();
 
             // Setup inputs
+
             Mouse.Move += (sender, ev) =>
             {
                 _cameraRotation += _cameraAngularSpeed * ev.XDelta;
                 UpdateViewMatrix();
+                
+                _gui?.OnMouseMove(ev);
+            };
+
+            Mouse.ButtonDown += (sender, ev) =>
+            {
+                _gui?.OnMouseButton(ev);
+            };
+
+            Mouse.ButtonUp += (sender, ev) =>
+            {
+                _gui?.OnMouseButton(ev);
             };
 
             Mouse.WheelChanged += (sender, ev) =>
             {
+                // Move the camera
                 _cameraDistance += _cameraZoomSpeed * -ev.DeltaPrecise;
                 UpdateViewMatrix();
             };
@@ -77,9 +91,13 @@ namespace Shaders
                         CycleSets();
                         break;
                     case 'l':
-                        _orbitLight = !_orbitLight;
+                        if (CurrentSet != null)
+                            CurrentSet.OrbitLight = !CurrentSet.OrbitLight;
                         break;
                 }
+
+                // Send inputs to the GUI
+                _gui?.OnKeyPress(ev);
             };
 
             // Load assets
@@ -106,7 +124,7 @@ namespace Shaders
             CreateMaterial("Eye Phong", _shaders["Phong shading"])
                 .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png")
                 .Texture(Material.TextureType.Specular, "eyeball_specular.png");
-            CreateMaterial("Eye normal", _shaders["Normal mapping"])
+            /*CreateMaterial("Eye normal", _shaders["Normal mapping"])
                 .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png")
                 .Texture(Material.TextureType.Specular, "eyeball_specular.png")
                 .Texture(Material.TextureType.Normal, "eyeball_normal.png");
@@ -117,21 +135,21 @@ namespace Shaders
                 .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png")
                 .Texture(Material.TextureType.Specular, "floor_specular2.png")
                 .Texture(Material.TextureType.Normal, "floor_normal.png")
-                .Texture(Material.TextureType.Height, "floor_height.png");
+                .Texture(Material.TextureType.Height, "floor_height.png");*/
 
             CreateSet(new ModelInstance(_models["Box"], _materials["Single color"]));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye Phong"])).SetLight(new PointLight(5, 1, 10));
-            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye normal"])).SetLight(new PointLight(5, 1, 10));
+            /*CreateSet(new ModelInstance(_models["Eye"], _materials["Eye normal"])).SetLight(new PointLight(5, 1, 10));
             CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock"]));
-            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"])).SetLight(new PointLight(1, 5, -10));
+            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"])).SetLight(new PointLight(1, 5, -10));*/
 
             /*CreateSet(
                 new ModelInstance(_models["Floor"], _shaders["Single color"]).Move(0, -0.5f, 0),
                 new ModelInstance(_models["Box"], _shaders["Single color"]));*/
 
-            _currentSet = _sets.Last();
+            CurrentSet = _sets.Last();
 
             _gui = new GUI(this);
         }
@@ -161,7 +179,7 @@ namespace Shaders
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            _currentSet?.Draw();
+            CurrentSet?.Draw();
             _gui?.Draw(e.Time);
 
             SwapBuffers();
@@ -172,8 +190,8 @@ namespace Shaders
             base.OnUpdateFrame(e);
 
             // Orbit the light around the origin of the scene
-            if (_orbitLight && _currentSet.Light != null)
-                _currentSet.Light.Position = Vector3.Transform(_currentSet.Light.Position, Matrix4.CreateRotationY(0.01f));
+            if (CurrentSet != null && CurrentSet.Light != null && CurrentSet.OrbitLight)
+                CurrentSet.Light.Position = Vector3.Transform(CurrentSet.Light.Position, Matrix4.CreateRotationY(0.01f));
         }
 
         private Shader LoadShader(string name, string path)
@@ -206,16 +224,16 @@ namespace Shaders
 
         private void CycleSets(bool forward = true)
         {
-            var index = _sets.IndexOf(_currentSet) + (forward ? 1 : -1);
+            var index = _sets.IndexOf(CurrentSet) + (forward ? 1 : -1);
 
             if (index >= _sets.Count)
                 index = 0;
             else if (index < 0)
                 index = _sets.Count - 1;
 
-            _currentSet = _sets[index];
+            CurrentSet = _sets[index];
 
-            Console.WriteLine($"Switched to set #{index}: {_currentSet.ToString()}");
+            Console.WriteLine($"Switched to set #{index}: {CurrentSet.ToString()}");
         }
 
         private void UpdateViewMatrix()

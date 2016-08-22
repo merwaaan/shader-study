@@ -7,7 +7,7 @@ namespace Shaders
     /// <summary>
     ///     Instance of a 3D model associating graphics data with a shader and a world transform.
     /// </summary>
-    class ModelInstance
+    public class ModelInstance
     {
         public Matrix4 Transform => _transform;
 

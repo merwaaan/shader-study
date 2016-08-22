@@ -6,9 +6,11 @@ namespace Shaders
     /// <summary>
     ///     Scene containing model instances to be rendered.
     /// </summary>
-    internal class Set
+    public class Set
     {
         public ILight Light { get; private set; }
+
+        public bool OrbitLight;
 
         private readonly List<ModelInstance> _modelInstances = new List<ModelInstance>();
 
@@ -23,7 +25,7 @@ namespace Shaders
             foreach (var instance in _modelInstances)
                 instance.Unload();
         }
-        
+
         public void Draw()
         {
             foreach (var instance in _modelInstances)
