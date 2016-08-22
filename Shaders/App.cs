@@ -22,7 +22,7 @@ namespace Shaders
         private float _cameraRotation;
         private float _cameraAngularSpeed = 0.005f;
         private float _cameraDistance = 1;
-        private float _cameraZoomSpeed = 0.2f;
+        private float _cameraZoomSpeed = 0.02f;
 
         // TODO create asset handling class
         private readonly Dictionary<string, Model> _models = new Dictionary<string, Model>();
@@ -124,7 +124,7 @@ namespace Shaders
             CreateMaterial("Eye Phong", _shaders["Phong shading"])
                 .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png")
                 .Texture(Material.TextureType.Specular, "eyeball_specular.png");
-            /*CreateMaterial("Eye normal", _shaders["Normal mapping"])
+            CreateMaterial("Eye normal", _shaders["Normal mapping"])
                 .Texture(Material.TextureType.Diffuse, "eyeball_diffuse.png")
                 .Texture(Material.TextureType.Specular, "eyeball_specular.png")
                 .Texture(Material.TextureType.Normal, "eyeball_normal.png");
@@ -135,15 +135,15 @@ namespace Shaders
                 .Texture(Material.TextureType.Diffuse, "floor_albedo_ao.png")
                 .Texture(Material.TextureType.Specular, "floor_specular2.png")
                 .Texture(Material.TextureType.Normal, "floor_normal.png")
-                .Texture(Material.TextureType.Height, "floor_height.png");*/
+                .Texture(Material.TextureType.Height, "floor_height.png");
 
             CreateSet(new ModelInstance(_models["Box"], _materials["Single color"]));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye Phong"])).SetLight(new PointLight(5, 1, 10));
-            /*CreateSet(new ModelInstance(_models["Eye"], _materials["Eye normal"])).SetLight(new PointLight(5, 1, 10));
+            CreateSet(new ModelInstance(_models["Eye"], _materials["Eye normal"])).SetLight(new PointLight(5, 1, 10));
             CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock"]));
-            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"])).SetLight(new PointLight(1, 5, -10));*/
+            CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"])).SetLight(new PointLight(1, 5, -10));
 
             /*CreateSet(
                 new ModelInstance(_models["Floor"], _shaders["Single color"]).Move(0, -0.5f, 0),

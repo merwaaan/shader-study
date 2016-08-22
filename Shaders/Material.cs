@@ -29,7 +29,6 @@ namespace Shaders
         public Material(Shader shader)
         {
             Shader = shader;
-
         }
 
         public Material Texture(TextureType type, string path)
@@ -59,7 +58,7 @@ namespace Shaders
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMagFilter.Linear);
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
-            ;
+            
             Console.WriteLine($"Loaded texture {fullPath} with ID {textureHandle}, uniform location {uniformLocation}, unit {unit}");
 
             return textureHandle;
@@ -70,13 +69,15 @@ namespace Shaders
             foreach (var texture in _textureHandles)
             {
                 var type = texture.Key;
-                var unit = (TextureUnit) type;
+                var unit = (TextureUnit)type;
                 var handle = texture.Value;
 
                 GL.ActiveTexture(unit);
                 GL.BindTexture(TextureTarget.Texture2D, handle);
                 GL.Uniform1(Shader.GetTextureLocation(type), unit - TextureUnit.Texture0); // layout(binding=?) must match in the shader
             }
+
+            GL.ActiveTexture(TextureUnit.Texture0);
         }
     }
 }
