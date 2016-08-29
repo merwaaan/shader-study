@@ -26,10 +26,10 @@ namespace Shaders
                 instance.Unload();
         }
 
-        public void Draw()
+        public void Draw(IEye eye, Shader shader = null)
         {
             foreach (var instance in _modelInstances)
-                instance.Draw(this);
+                instance.Draw(this, eye, shader);
         }
 
         public Set SetLight(ILight light)

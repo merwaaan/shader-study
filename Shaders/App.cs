@@ -16,19 +16,18 @@ namespace Shaders
         public Set CurrentSet;
         public int CurrentSetIndex => _sets.IndexOf(CurrentSet);
 
-        // TODO create camera class
-        public Matrix4 ViewMatrix;
-        public Matrix4 ProjectionMatrix;
-        private float _cameraRotation;
-        private float _cameraAngularSpeed = 0.005f;
-        private float _cameraDistance = 1;
-        private float _cameraZoomSpeed = 0.02f;
+        public int ShadowMapHandle { get; private set; }
+        public float ShadowBias;
 
         // TODO create asset handling class
         private readonly Dictionary<string, Model> _models = new Dictionary<string, Model>();
         private readonly Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>();
         private readonly Dictionary<string, Material> _materials = new Dictionary<string, Material>();
         private readonly List<Set> _sets = new List<Set>();
+
+        private int _shadowFboHandle;
+
+        private Camera _camera;
 
         private GUI _gui;
 
@@ -49,17 +48,28 @@ namespace Shaders
             GL.DepthFunc(DepthFunction.Less);
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-            // Setup matrices
-            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float) Math.PI / 2, Width / (float) Height, 0.005f, 100f);
-            UpdateViewMatrix();
+            // Setup shadow mapping
 
+            ShadowMapHandle = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, ShadowMapHandle);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent, 1000, 1000, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) TextureWrapMode.ClampToBorder);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int) TextureWrapMode.ClampToBorder);
+
+            _shadowFboHandle = GL.GenFramebuffer();
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _shadowFboHandle);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, ShadowMapHandle, 0);
+            GL.DrawBuffer(DrawBufferMode.None);
+            GL.ReadBuffer(ReadBufferMode.None);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            
             // Setup inputs
 
             Mouse.Move += (sender, ev) =>
             {
-                _cameraRotation += _cameraAngularSpeed * ev.XDelta;
-                UpdateViewMatrix();
-                
+                _camera?.OnMouseMove(ev);
                 _gui?.OnMouseMove(ev);
             };
 
@@ -75,9 +85,7 @@ namespace Shaders
 
             Mouse.WheelChanged += (sender, ev) =>
             {
-                // Move the camera
-                _cameraDistance += _cameraZoomSpeed * -ev.DeltaPrecise;
-                UpdateViewMatrix();
+                _camera?.OnMouseWheel(ev);
             };
 
             KeyPress += (sender, ev) =>
@@ -95,8 +103,7 @@ namespace Shaders
                             CurrentSet.OrbitLight = !CurrentSet.OrbitLight;
                         break;
                 }
-
-                // Send inputs to the GUI
+                
                 _gui?.OnKeyPress(ev);
             };
 
@@ -115,6 +122,8 @@ namespace Shaders
             LoadShader("Phong shading", "Phong");
             LoadShader("Normal mapping", "NormalMapping");
             LoadShader("Parallax mapping", "ParallaxMapping");
+            LoadShader("Depth map", "DepthMap");
+            LoadShader("Shadow mapping", "ShadowMapping");
 
             CreateMaterial("Single color", _shaders["Single color"]);
             CreateMaterial("Vertex colors", _shaders["Vertex colors"]);
@@ -137,7 +146,12 @@ namespace Shaders
                 .Texture(Material.TextureType.Normal, "floor_normal.png")
                 .Texture(Material.TextureType.Height, "floor_height.png");
 
-            CreateSet(new ModelInstance(_models["Box"], _materials["Single color"]));
+            CreateMaterial("Brick", _shaders["Shadow mapping"])
+                .Texture(Material.TextureType.Diffuse, "brick_diffuse.jpg")
+                .Texture(Material.TextureType.Normal, "brick_normal.jpg")
+                .Texture(Material.TextureType.Height, "brick_height.jpg");
+
+            CreateSet(new ModelInstance(_models["Box"], _materials["Single color"])).SetLight(new PointLight(5, 1, 10));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye Phong"])).SetLight(new PointLight(5, 1, 10));
@@ -145,11 +159,14 @@ namespace Shaders
             CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock"]));
             CreateSet(new ModelInstance(_models["Rocks"], _materials["Rock parallax"])).SetLight(new PointLight(1, 5, -10));
 
-            /*CreateSet(
-                new ModelInstance(_models["Floor"], _shaders["Single color"]).Move(0, -0.5f, 0),
-                new ModelInstance(_models["Box"], _shaders["Single color"]));*/
+            CreateSet(
+                new ModelInstance(_models["Eye"], _materials["Eye diffuse"]).Move(0, 0.25f, 0),
+                new ModelInstance(_models["Floor"], _materials["Brick"]).Move(0, -0.5f, 0))
+                .SetLight(new PointLight(0, 3, 0.1f));
 
             CurrentSet = _sets.Last();
+
+            _camera = new Camera(this);
 
             _gui = new GUI(this);
         }
@@ -177,12 +194,36 @@ namespace Shaders
         {
             base.OnRenderFrame(e);
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            RenderShadowMap();
+            RenderScene();
 
-            CurrentSet?.Draw();
             _gui?.Draw(e.Time);
 
             SwapBuffers();
+        }
+
+        private void RenderShadowMap()
+        {
+            if (CurrentSet?.Light == null)
+                return;
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _shadowFboHandle);
+            
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+            GL.Viewport(0, 0, 1000, 1000);
+            
+            // Render the scene from the light's perspective, with the shadow map shader
+            CurrentSet?.Draw(CurrentSet.Light, _shaders["Depth map"]);
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        }
+
+        private void RenderScene()
+        {
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Viewport(0, 0, Width, Height);
+
+            CurrentSet?.Draw(_camera);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -190,8 +231,8 @@ namespace Shaders
             base.OnUpdateFrame(e);
 
             // Orbit the light around the origin of the scene
-            if (CurrentSet != null && CurrentSet.Light != null && CurrentSet.OrbitLight)
-                CurrentSet.Light.Position = Vector3.Transform(CurrentSet.Light.Position, Matrix4.CreateRotationY(0.01f));
+            if (CurrentSet?.Light != null && CurrentSet.OrbitLight)
+                CurrentSet.Light.Transform = CurrentSet.Light.Transform * Matrix4.CreateRotationY(0.01f);
         }
 
         private Shader LoadShader(string name, string path)
@@ -234,16 +275,6 @@ namespace Shaders
             CurrentSet = _sets[index];
 
             Console.WriteLine($"Switched to set #{index}: {CurrentSet.ToString()}");
-        }
-
-        private void UpdateViewMatrix()
-        {
-            var eye = new Vector3(
-                _cameraDistance * (float) Math.Cos(_cameraRotation),
-                0,
-                _cameraDistance * (float) Math.Sin(_cameraRotation));
-
-            ViewMatrix = ViewMatrix = Matrix4.LookAt(eye, Vector3.Zero, Vector3.UnitY);
         }
     }
 }

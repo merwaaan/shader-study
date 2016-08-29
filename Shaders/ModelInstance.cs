@@ -7,14 +7,12 @@ namespace Shaders
     /// <summary>
     ///     Instance of a 3D model associating graphics data with a shader and a world transform.
     /// </summary>
-    public class ModelInstance
+    public class ModelInstance : ITransform
     {
-        public Matrix4 Transform => _transform;
+        public Matrix4 Transform { get; set; }
 
         public Model Model { get; }
         public Material Material { get; }
-
-        private Matrix4 _transform;
 
         private int _vaoHandle;
 
@@ -23,7 +21,7 @@ namespace Shaders
             Model = model;
             Material = material;
 
-            _transform = Matrix4.Identity;
+            Transform = Matrix4.Identity;
 
             SetupAttributes();
         }
@@ -66,17 +64,21 @@ namespace Shaders
             GL.DeleteBuffers(1, ref _vaoHandle);
         }
 
-        public void Draw(Set set)
+        public void Draw(Set set, IEye eye, Shader shader = null)
         {
-            GL.UseProgram(Material.Shader.ProgramHandle);
+            // Use either the provided shader of the object's own shader
+            shader = shader ?? Material.Shader;
+
+            GL.UseProgram(shader.ProgramHandle);
 
             // Update the matrix uniforms
-            var mvp = _transform * App.Instance.ViewMatrix * App.Instance.ProjectionMatrix;
-            GL.UniformMatrix4(Material.Shader.ModelMatrixLocation, false, ref _transform);
-            GL.UniformMatrix4(Material.Shader.MvpMatrixLocation, false, ref mvp);
+            var t = Transform;
+            var mvp = t * eye.ViewMatrix * eye.ProjectionMatrix;
+            GL.UniformMatrix4(shader.ModelMatrixLocation, false, ref t);
+            GL.UniformMatrix4(shader.MvpMatrixLocation, false, ref mvp);
 
             // Update the light parameters
-            set.Light?.Bind(Material.Shader);
+            set.Light?.Bind(shader);
 
             // Update the material parameters
             Material.Bind();
@@ -90,7 +92,13 @@ namespace Shaders
 
         public ModelInstance Move(float x, float y, float z)
         {
-            _transform = Matrix4.CreateTranslation(x, y, z);
+            Transform = Matrix4.CreateTranslation(x, y, z);
+            return this;
+        }
+
+        public ModelInstance Scale(float s)
+        {
+            Transform = Matrix4.CreateScale(s);
             return this;
         }
     }

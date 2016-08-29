@@ -19,7 +19,8 @@ namespace Shaders
             Diffuse = TextureUnit.Texture0,
             Specular,
             Normal,
-            Height
+            Height,
+            Shadow = TextureUnit.Texture10
         }
 
         public Shader Shader { get; }
@@ -66,6 +67,7 @@ namespace Shaders
 
         internal void Bind()
         {
+            // Bind the material's textures
             foreach (var texture in _textureHandles)
             {
                 var type = texture.Key;
@@ -76,6 +78,13 @@ namespace Shaders
                 GL.BindTexture(TextureTarget.Texture2D, handle);
                 GL.Uniform1(Shader.GetTextureLocation(type), unit - TextureUnit.Texture0); // layout(binding=?) must match in the shader
             }
+
+            // Bind the shadow uniforms
+            GL.ActiveTexture(TextureUnit.Texture10);
+            GL.BindTexture(TextureTarget.Texture2D, App.Instance.ShadowMapHandle);
+            GL.Uniform1(Shader.GetTextureLocation(TextureType.Shadow), TextureUnit.Texture10 - TextureUnit.Texture0);
+            
+            GL.Uniform1(Shader.ShadowBiasLocation, App.Instance.ShadowBias);
 
             GL.ActiveTexture(TextureUnit.Texture0);
         }

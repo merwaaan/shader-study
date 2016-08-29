@@ -19,8 +19,12 @@ namespace Shaders
         public int SpecularMapLocation { get; private set; }
         public int NormalMapLocation { get; private set; }
         public int HeightMapLocation { get; private set; }
+        public int ShadowMapLocation { get; private set; }
+
+        public int ShadowBiasLocation { get; private set; }
 
         public int LightPositionLocation { get; private set; }
+        public int LightSpaceMatrixLocation { get; private set; }
 
         public int PositionLocation { get; private set; }
         public int ColorLocation { get; private set; }
@@ -77,8 +81,12 @@ namespace Shaders
             SpecularMapLocation = GL.GetUniformLocation(ProgramHandle, "specular_map");
             NormalMapLocation = GL.GetUniformLocation(ProgramHandle, "normal_map");
             HeightMapLocation = GL.GetUniformLocation(ProgramHandle, "height_map");
+            ShadowMapLocation = GL.GetUniformLocation(ProgramHandle, "shadow_map");
+
+            ShadowBiasLocation = GL.GetUniformLocation(ProgramHandle, "shadow_bias");
 
             LightPositionLocation = GL.GetUniformLocation(ProgramHandle, "light_position");
+            LightSpaceMatrixLocation = GL.GetUniformLocation(ProgramHandle, "light_matrix");
 
             PositionLocation = GL.GetAttribLocation(ProgramHandle, "vertex_position");
             ColorLocation = GL.GetAttribLocation(ProgramHandle, "vertex_color");
@@ -107,6 +115,8 @@ namespace Shaders
                     return NormalLocation;
                 case Material.TextureType.Height:
                     return HeightMapLocation;
+                case Material.TextureType.Shadow:
+                    return ShadowMapLocation;
                 default:
                     throw new ArgumentException(nameof(type));
             }

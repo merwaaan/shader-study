@@ -1,7 +1,7 @@
 ﻿#version 400
 
-uniform mat4 mvp_matrix;
 uniform mat4 model_matrix;
+uniform mat4 mvp_matrix;
 
 in vec3 vertex_position;
 in vec3 vertex_normal;

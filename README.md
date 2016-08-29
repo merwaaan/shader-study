@@ -9,9 +9,9 @@ Implemented shaders:
 * Blinn-Phong shading
 * Normal Mapping
 * Parallax mapping
+* Shadow mapping
 
 TODO:
-* Shadow mapping
 * Post-processing effects
 	* Tinting
 	* Warping

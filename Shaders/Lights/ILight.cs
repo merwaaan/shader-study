@@ -2,10 +2,8 @@
 
 namespace Shaders.Lights
 {
-    public interface ILight
+    public interface ILight : ITransform, IEye
     {
-        Vector3 Position { get; set; }
-
         /// <summary>
         ///     Update the shader's uniforms with the light's parameters.
         /// </summary>
