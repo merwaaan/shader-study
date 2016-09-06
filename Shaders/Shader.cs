@@ -8,9 +8,10 @@ namespace Shaders
     // From http://deathbyalgorithm.blogspot.fr/2013/12/basic-opentk-4-window.html
     public class Shader
     {
-        public int VertexShaderHandle { get; private set; }
-        public int FragmentShaderHandler { get; private set; }
-        public int ProgramHandle { get; private set; }
+        public int VertexShaderHandle { get; private set; } = -1;
+        public int GeometryShaderHandle { get; private set; } = -1;
+        public int FragmentShaderHandler { get; private set; } = -1;
+        public int ProgramHandle { get; private set; } = -1;
 
         public int ModelMatrixLocation { get; private set; }
         public int MvpMatrixLocation { get; private set; }
@@ -33,43 +34,104 @@ namespace Shaders
         public int BitangentLocation { get; private set; }
         public int TexCoordLocation { get; private set; }
 
-        private readonly string _vertexSource;
-        private readonly string _fragmentSource;
+        private string _vertexSource;
+        private string _geometrySource;
+        private string _fragmentSource;
 
-        public Shader(App window, string name)
+        public Shader(App app)
         {
-            _vertexSource = File.ReadAllText($"Shaders/{name}.vert");
-            _fragmentSource = File.ReadAllText($"Shaders/{name}.frag");
+        }
 
+        public Shader(App app, string name)
+        {
+            Vertex(name);
+            Geometry(name);
+            Fragment(name);
             Build();
         }
 
-        private void Build()
+        public Shader Vertex(string name)
         {
-            VertexShaderHandle = GL.CreateShader(ShaderType.VertexShader);
-            FragmentShaderHandler = GL.CreateShader(ShaderType.FragmentShader);
+            Console.WriteLine($"Loading vertex shader: {name}...");
+            _vertexSource = ReadShaderSource($"Shaders/{name}.vert");
+            return this;
+        }
+
+        public Shader Geometry(string name)
+        {
+            Console.WriteLine($"Loading geometry shader: {name}...");
+            _geometrySource = ReadShaderSource($"Shaders/{name}.geom");
+            return this;
+        }
+
+        public Shader Fragment(string name)
+        {
+            Console.WriteLine($"Loading fragment shader: {name}...");
+            _fragmentSource = ReadShaderSource($"Shaders/{name}.frag");
+            return this;
+        }
+
+        private static string ReadShaderSource(string path)
+        {
+            try
+            {
+                return File.ReadAllText(path);
+            }
+            catch (IOException)
+            {
+                Console.WriteLine($"\tCannot read shader file: {path}");
+                return null;
+            }
+        }
+
+        public void Build()
+        {
+            ProgramHandle = GL.CreateProgram();
 
             // Compile vertex shader
-            GL.ShaderSource(VertexShaderHandle, _vertexSource);
-            GL.CompileShader(VertexShaderHandle);
+            if (_vertexSource != null)
+            {
+                VertexShaderHandle = GL.CreateShader(ShaderType.VertexShader);
 
-            var info = GL.GetShaderInfoLog(VertexShaderHandle);
-            if (!string.IsNullOrEmpty(info))
-                throw new ApplicationException(info);
+                GL.ShaderSource(VertexShaderHandle, _vertexSource);
+                GL.CompileShader(VertexShaderHandle);
+
+                var info = GL.GetShaderInfoLog(VertexShaderHandle);
+                if (!string.IsNullOrEmpty(info))
+                    throw new ApplicationException(info);
+
+                GL.AttachShader(ProgramHandle, VertexShaderHandle);
+            }
+
+            // Compile geometry shader
+            if (_geometrySource != null)
+            {
+                GeometryShaderHandle = GL.CreateShader(ShaderType.GeometryShader);
+
+                GL.ShaderSource(GeometryShaderHandle, _geometrySource);
+                GL.CompileShader(GeometryShaderHandle);
+
+                var info = GL.GetShaderInfoLog(GeometryShaderHandle);
+                if (!string.IsNullOrEmpty(info))
+                    throw new ApplicationException(info);
+
+                GL.AttachShader(ProgramHandle, GeometryShaderHandle);
+            }
 
             // Compile fragment shader
-            GL.ShaderSource(FragmentShaderHandler, _fragmentSource);
-            GL.CompileShader(FragmentShaderHandler);
+            if (_fragmentSource != null)
+            {
+                FragmentShaderHandler = GL.CreateShader(ShaderType.FragmentShader);
 
-            info = GL.GetShaderInfoLog(FragmentShaderHandler);
-            if (!string.IsNullOrEmpty(info))
-                throw new ApplicationException(info);
+                GL.ShaderSource(FragmentShaderHandler, _fragmentSource);
+                GL.CompileShader(FragmentShaderHandler);
 
-            Console.WriteLine(info);
+                var info = GL.GetShaderInfoLog(FragmentShaderHandler);
+                if (!string.IsNullOrEmpty(info))
+                    throw new ApplicationException(info);
 
-            ProgramHandle = GL.CreateProgram();
-            GL.AttachShader(ProgramHandle, FragmentShaderHandler);
-            GL.AttachShader(ProgramHandle, VertexShaderHandle);
+                GL.AttachShader(ProgramHandle, FragmentShaderHandler);
+            }
 
             GL.LinkProgram(ProgramHandle);
             GL.UseProgram(ProgramHandle);

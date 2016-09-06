@@ -10,6 +10,7 @@ Implemented shaders:
 * Normal Mapping
 * Parallax mapping
 * Shadow mapping
+* Particles (quads emitted from a geometry shader)
 
 TODO:
 * Post-processing effects

@@ -6,29 +6,29 @@ namespace Shaders
     /// <summary>
     ///     Scene containing model instances to be rendered.
     /// </summary>
-    public class Set
+    public class Set : IUpdateable
     {
         public ILight Light { get; private set; }
 
         public bool OrbitLight;
 
-        private readonly List<ModelInstance> _modelInstances = new List<ModelInstance>();
+        private readonly List<IDrawable> _drawables = new List<IDrawable>();
 
-        public Set(params ModelInstance[] instances)
+        public Set(params IDrawable[] instances)
         {
             foreach (var instance in instances)
-                _modelInstances.Add(instance);
+                _drawables.Add(instance);
         }
 
         public void Unload()
         {
-            foreach (var instance in _modelInstances)
+            foreach (var instance in _drawables)
                 instance.Unload();
         }
 
         public void Draw(IEye eye, Shader shader = null)
         {
-            foreach (var instance in _modelInstances)
+            foreach (var instance in _drawables)
                 instance.Draw(this, eye, shader);
         }
 
@@ -36,6 +36,12 @@ namespace Shaders
         {
             Light = light;
             return this;
+        }
+
+        public void Update(float dt)
+        {
+            foreach (var drawable in _drawables)
+                (drawable as IUpdateable)?.Update(dt);
         }
     }
 }

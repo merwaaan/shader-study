@@ -7,7 +7,7 @@ namespace Shaders
     /// <summary>
     ///     Instance of a 3D model associating graphics data with a shader and a world transform.
     /// </summary>
-    public class ModelInstance : ITransform
+    public class ModelInstance : ITransform, IDrawable
     {
         public Matrix4 Transform { get; set; }
 

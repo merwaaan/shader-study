@@ -124,6 +124,11 @@ namespace Shaders
             LoadShader("Parallax mapping", "ParallaxMapping");
             LoadShader("Depth map", "DepthMap");
             LoadShader("Shadow mapping", "ShadowMapping");
+            LoadShader("Points to quads")
+                .Vertex("SingleColor")
+                .Geometry("PointsToQuad")
+                .Fragment("SingleColor")
+                .Build();
 
             CreateMaterial("Single color", _shaders["Single color"]);
             CreateMaterial("Vertex colors", _shaders["Vertex colors"]);
@@ -151,6 +156,8 @@ namespace Shaders
                 .Texture(Material.TextureType.Normal, "brick_normal.jpg")
                 .Texture(Material.TextureType.Height, "brick_height.jpg");
 
+            CreateMaterial("Points to quads", _shaders["Points to quads"]);
+
             CreateSet(new ModelInstance(_models["Box"], _materials["Single color"])).SetLight(new PointLight(5, 1, 10));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
             CreateSet(new ModelInstance(_models["Eye"], _materials["Eye diffuse"]));
@@ -163,6 +170,8 @@ namespace Shaders
                 new ModelInstance(_models["Eye"], _materials["Eye diffuse"]).Move(0, 0.25f, 0),
                 new ModelInstance(_models["Floor"], _materials["Brick"]).Move(0, -0.5f, 0))
                 .SetLight(new PointLight(0, 3, 0.1f));
+
+            CreateSet(new ParticleSystem(_materials["Points to quads"]).Add(500));
 
             CurrentSet = _sets.Last();
 
@@ -230,6 +239,8 @@ namespace Shaders
         {
             base.OnUpdateFrame(e);
 
+            CurrentSet?.Update((float)e.Time);
+
             // Orbit the light around the origin of the scene
             if (CurrentSet?.Light != null && CurrentSet.OrbitLight)
                 CurrentSet.Light.Transform = CurrentSet.Light.Transform * Matrix4.CreateRotationY(0.01f);
@@ -238,6 +249,13 @@ namespace Shaders
         private Shader LoadShader(string name, string path)
         {
             var shader = new Shader(this, path);
+            _shaders.Add(name, shader);
+            return shader;
+        }
+
+        private Shader LoadShader(string name)
+        {
+            var shader = new Shader(this);
             _shaders.Add(name, shader);
             return shader;
         }
@@ -256,7 +274,7 @@ namespace Shaders
             return material;
         }
 
-        private Set CreateSet(params ModelInstance[] instances)
+        private Set CreateSet(params IDrawable[] instances)
         {
             var set = new Set(instances);
             _sets.Add(set);
