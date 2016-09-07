@@ -46,6 +46,10 @@ namespace Shaders
 
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Less);
+
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
             // Setup shadow mapping
@@ -129,6 +133,11 @@ namespace Shaders
                 .Geometry("PointsToQuad")
                 .Fragment("SingleColor")
                 .Build();
+            LoadShader("Points to textured quads")
+                .Vertex("TextureMapping")
+                .Geometry("PointsToQuad")
+                .Fragment("TextureMapping")
+                .Build();
 
             CreateMaterial("Single color", _shaders["Single color"]);
             CreateMaterial("Vertex colors", _shaders["Vertex colors"]);
@@ -157,6 +166,8 @@ namespace Shaders
                 .Texture(Material.TextureType.Height, "brick_height.jpg");
 
             CreateMaterial("Points to quads", _shaders["Points to quads"]);
+            CreateMaterial("Points to textured quads", _shaders["Points to textured quads"])
+                .Texture(Material.TextureType.Diffuse, "star.png");
 
             CreateSet(new ModelInstance(_models["Box"], _materials["Single color"])).SetLight(new PointLight(5, 1, 10));
             CreateSet(new ModelInstance(_models["Box"], _materials["Vertex colors"]));
@@ -172,6 +183,7 @@ namespace Shaders
                 .SetLight(new PointLight(0, 3, 0.1f));
 
             CreateSet(new ParticleSystem(_materials["Points to quads"]).Add(500));
+            CreateSet(new ParticleSystem(_materials["Points to textured quads"]).Add(500));
 
             CurrentSet = _sets.Last();
 
